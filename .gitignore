@@ -12,3 +12,4 @@ assets/
 assets_to_build/audio/samples/downsample.py
 /assets_to_build/audio/samples/sfx_hq
 /tools/bin
+.vscode/nops.bat
