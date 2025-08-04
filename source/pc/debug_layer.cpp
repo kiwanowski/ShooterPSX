@@ -96,9 +96,9 @@ void inspect_vec3(vec3_t* vec, const char* label) {
 
 void inspect_svec3_4_12(svec3_t* vec, const char* label) {
     float vec_float[] =  {
-        vec->x,
-        vec->y,
-        vec->z,
+        (float)vec->x,
+        (float)vec->y,
+        (float)vec->z,
     };
 
     if (ImGui::DragFloat3(label, vec_float)) {
@@ -468,7 +468,9 @@ void debug_layer_manipulate_entity(transform_t* camera, int* selected_entity_slo
                 entity_types[i] = entity_get_type(i);
             }
 
-            light_t lights[MAX_LIGHT_COUNT] = {0};
+            light_t lights[MAX_LIGHT_COUNT];
+            memset(lights, 0, sizeof(lights));
+
             int n_lights = 0;
             for (int i = 0; i < MAX_LIGHT_COUNT; ++i) {
                 if (curr_level->lights[i].type != LIGHT_NONE) {
@@ -805,7 +807,7 @@ void debug_layer_manipulate_entity(transform_t* camera, int* selected_entity_slo
     }
     ImGui::End();
 
-    for (size_t i = 0; i < MAX_LIGHT_COUNT && curr_level->lights && i < curr_level->n_lights; ++i) {
+    for (int i = 0; i < MAX_LIGHT_COUNT && curr_level->lights && i < curr_level->n_lights; ++i) {
         if (curr_level->lights[i].type != LIGHT_NONE
         && curr_level->lights[i].type != LIGHT_DIRECTIONAL) {
             transform_t trans = {
@@ -827,7 +829,7 @@ void debug_layer_manipulate_entity(transform_t* camera, int* selected_entity_slo
             renderer_draw_mesh_shaded(&gizmos->meshes[(size_t)(curr_level->lights[i].type-1)], &trans, 0, 1, GIZMO_TEXTURE_OFFSET);
         }
     }
-    renderer_update_lights(curr_level->lights, curr_level->n_lights);
+    renderer_update_lights(curr_level->lights);
 
     // Text editor window
     ImGui::Begin("Text editor", NULL, ImGuiWindowFlags_None);

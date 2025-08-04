@@ -646,7 +646,7 @@ void renderer_update_window_res(int width, int height) {
 	aspect = (float)width / (float)height;
 }
 
-void renderer_update_lights(const light_t* const lights, const size_t n_lights) {
+void renderer_update_lights(const light_t* const lights) {
 	size_t i = 0;
 	while (i < MAX_LIGHT_COUNT) {
 		if (lights[i].type != LIGHT_NONE) {
@@ -666,11 +666,6 @@ void renderer_update_lights(const light_t* const lights, const size_t n_lights) 
 		}
 	}
 
-	while (i < MAX_LIGHT_COUNT) {
-		converted_lights[i].type = 0.0f;
-		++i;
-	}
-	
 	glBindBuffer(GL_UNIFORM_BUFFER, light_buffer_gpu);
 	glBufferData(GL_UNIFORM_BUFFER, sizeof(converted_lights), converted_lights, GL_DYNAMIC_DRAW);
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);

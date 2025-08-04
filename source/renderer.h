@@ -69,7 +69,7 @@ float* renderer_debug_perspective_matrix(void);
 float* renderer_debug_view_matrix(void);
 void renderer_set_drawing_id(int id, int what); // what: 0 = none, 1 = entity, 2 = light
 void renderer_update_window_res(int width, int height);
-void renderer_update_lights(const light_t* const lights, const size_t n_lights);
+void renderer_update_lights(const light_t* const lights);
 #endif
 
 inline uint8_t mul_8x8(const uint8_t a, const uint8_t b) {
