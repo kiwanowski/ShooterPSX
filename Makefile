@@ -140,6 +140,7 @@ CXXFLAGS = -Wall -Wextra -Werror -std=c++20 -Wno-format
 LINKER_FLAGS = 
 
 .PHONY: all submodules tools assets pc level_editor psx nds clean mkdir_output_pc pc_dependencies glfw gl3w imgui imguizmo
+.NOTPARALLEL: assets tools pc psx level_editor nds clean
 all: submodules tools assets pc level_editor psx nds
 
 # Windows target
@@ -193,7 +194,7 @@ mkdir_output_pc:
 submodules:
 	# git submodule update --init --recursive
 	
-pc_dependencies: submodules glfw gl3w imgui imguizmo portaudio
+pc_dependencies: submodules .WAIT glfw .WAIT gl3w .WAIT imgui .WAIT imguizmo .WAIT portaudio .WAIT
 
 GLFW_LIB_PATHS = $(PATH_LIB_PC)/glfw/src/libglfw3.a \
 				 $(PATH_LIB_PC)/glfw/src/glfw3.lib \
@@ -203,23 +204,23 @@ GLFW_LIB_PATHS = $(PATH_LIB_PC)/glfw/src/libglfw3.a \
 # Build glfw - using Unix Makefiles generator because we're already using Make anyway
 glfw:
 	mkdir -p $(PATH_LIB_PC)/glfw
-	@cmake -S external/glfw -B $(PATH_LIB_PC)/glfw -G "Unix Makefiles"
-	@cmake --build $(PATH_LIB_PC)/glfw --target glfw
+	@cmake -S external/glfw -B $(PATH_LIB_PC)/glfw -G "Unix Makefiles" -Wno-dev --log-level=WARNING
+	@cmake --build $(PATH_LIB_PC)/glfw --parallel --target glfw
 	cp $(PATH_LIB_PC)/glfw/src/libglfw3.a $(PATH_LIB_PC)
 
 # Build portaudio
 portaudio:
 	mkdir -p $(PATH_LIB_PC)/portaudio
-	@cmake -S external/portaudio -B $(PATH_LIB_PC)/portaudio -G "Unix Makefiles"
-	@cmake --build $(PATH_LIB_PC)/portaudio --target portaudio
+	@cmake -S external/portaudio -B $(PATH_LIB_PC)/portaudio -G "Unix Makefiles" -Wno-dev --log-level=WARNING
+	@cmake --build $(PATH_LIB_PC)/portaudio --parallel --target portaudio
 	cp $(PATH_LIB_PC)/portaudio/libportaudio.a $(PATH_LIB_PC)
 
 OBJ_PC += $(PATH_LIB_PC)/gl3w.o
 OBJ_LEVEL_EDITOR += $(PATH_LIB_PC)/gl3w.o
 gl3w:
 	mkdir -p $(PATH_LIB_PC)/gl3w
-	@cmake -S external/gl3w -B $(PATH_LIB_PC)/gl3w -G "Unix Makefiles"
-	@cmake --build $(PATH_LIB_PC)/gl3w
+	@cmake -S external/gl3w -B $(PATH_LIB_PC)/gl3w -G "Unix Makefiles" -Wno-dev --log-level=WARNING
+	@cmake --build $(PATH_LIB_PC)/gl3w --parallel
 	$(CC) -std=c11 -I$(PATH_LIB_PC)/gl3w/include -c $(PATH_LIB_PC)/gl3w/src/gl3w.c -o $(PATH_LIB_PC)/gl3w.o
 
 # Define the base directories
@@ -273,7 +274,7 @@ $(IMGUIZMO_OBJ_DIR)/%.o: $(IMGUIZMO_SRC_DIR)/%.cpp
 # Target rule for building imguizmo
 imguizmo: $(OBJ_IMGUIZMO)
 
-$(PATH_BUILD_PC)/$(PROJECT_NAME): mkdir_output_pc pc_dependencies $(OBJ_PC)
+$(PATH_BUILD_PC)/$(PROJECT_NAME): mkdir_output_pc .WAIT pc_dependencies .WAIT $(OBJ_PC)
 	@mkdir -p $(dir $@)
 	@echo Linking $@
 	@$(CXX) -o $@ $(OBJ_PC) $(OBJ_IMGUI) $(LINKER_FLAGS)
@@ -285,7 +286,7 @@ $(PATH_BUILD_LEVEL_EDITOR)/assets/imgui.ini:
 	@echo Copying default imgui.ini
 	@cp $(PATH_ASSETS_TO_BUILD)/level_editor/imgui.ini $@
 
-$(PATH_BUILD_LEVEL_EDITOR)/LevelEditor: mkdir_output_pc pc_dependencies $(OBJ_LEVEL_EDITOR) $(PATH_BUILD_LEVEL_EDITOR)/assets/imgui.ini
+$(PATH_BUILD_LEVEL_EDITOR)/LevelEditor: mkdir_output_pc .WAIT pc_dependencies .WAIT $(OBJ_LEVEL_EDITOR) $(PATH_BUILD_LEVEL_EDITOR)/assets/imgui.ini
 	@mkdir -p $(dir $@)
 	@mkdir -p $(PATH_ASSETS)/shared
 	@mkdir -p $(PATH_ASSETS)/pc
@@ -338,9 +339,9 @@ psx: LIBRARIES = gcc \
 				 gcc 
 psx: CC = $(PSN00BSDK_PATH)/bin/mipsel-none-elf-gcc$(EXE_EXT)
 psx: CXX = $(PSN00BSDK_PATH)/bin/mipsel-none-elf-g++$(EXE_EXT)
-psx: CFLAGS += $(patsubst %, -D%, $(DEFINES)) -Wno-unused-function -fanalyzer -O3 -g -Wa,--strip-local-absolute -ffreestanding -fno-builtin -nostdlib -fdata-sections -ffunction-sections -fsigned-char -fno-strict-overflow -fdiagnostics-color=always -msoft-float -march=r3000 -mtune=r3000 -mabi=32 -mno-mt -mno-llsc -G8 -fno-pic -mno-abicalls -mgpopt -mno-extern-sdata -MMD -MP -flto=auto -fuse-linker-plugin
-psx: CXXFLAGS += $(patsubst %, -D%, $(DEFINES)) -std=c++20 -flto=auto -fuse-linker-plugin
-psx: LINKER_FLAGS += $(patsubst %, -l%, $(LIBRARIES)) $(patsubst %, -L%, $(PATH_LIB_PSX)) -nostdlib -Wl,-gc-sections -G8 -static -T$(PSN00BSDK_LIBS)/ldscripts/exe.ld -flto=auto -save-temps
+psx: CFLAGS += $(patsubst %, -D%, $(DEFINES)) -Wno-unused-function -fanalyzer -g -Wa,--strip-local-absolute -ffreestanding -fno-builtin -nostdlib -fdata-sections -ffunction-sections -fsigned-char -fno-strict-overflow -fdiagnostics-color=always -msoft-float -march=r3000 -mtune=r3000 -mabi=32 -mno-mt -mno-llsc -G8 -fno-pic -mno-abicalls -mgpopt -mno-extern-sdata -MMD -MP  -fuse-linker-plugin
+psx: CXXFLAGS += $(patsubst %, -D%, $(DEFINES)) -std=c++20  -fuse-linker-plugin
+psx: LINKER_FLAGS += $(patsubst %, -l%, $(LIBRARIES)) $(patsubst %, -L%, $(PATH_LIB_PSX)) -nostdlib -Wl,-gc-sections -G8 -static -T$(PSN00BSDK_LIBS)/ldscripts/exe.ld  -save-temps
 psx: INCLUDE_DIRS = source \
 			   $(PATH_LIB_PC)/gl3w/include \
 			   $(PSN00BSDK_PATH)/include/libpsn00b 
@@ -453,33 +454,38 @@ COMPILED_ASSET_LIST = $(PATH_ASSETS)/pc/GOURAUD.FSH \
 					  $(PATH_ASSETS)/shared/levels/level1.lvl \
 					  $(PATH_ASSETS)/shared/levels/level2.lvl \
 					  $(PATH_ASSETS)/shared/models/entity.msh \
-					  $(PATH_ASSETS)/shared/models/entity.txc \
 					  $(PATH_ASSETS)/shared/models/level.col \
-					  $(PATH_ASSETS)/shared/models/level.vis \
 					  $(PATH_ASSETS)/shared/models/level.msh \
-					  $(PATH_ASSETS)/shared/models/level.txc \
 					  $(PATH_ASSETS)/shared/models/level2.col \
-					  $(PATH_ASSETS)/shared/models/level2.vis \
 					  $(PATH_ASSETS)/shared/models/level2.msh \
-					  $(PATH_ASSETS)/shared/models/level2.txc \
 					  $(PATH_ASSETS)/shared/models/test.col \
-					  $(PATH_ASSETS)/shared/models/test.vis \
 					  $(PATH_ASSETS)/shared/models/test.msh \
-					  $(PATH_ASSETS)/shared/models/test.txc \
 					  $(PATH_ASSETS)/shared/models/test2.col \
-					  $(PATH_ASSETS)/shared/models/test2.vis \
 					  $(PATH_ASSETS)/shared/models/test2.msh \
-					  $(PATH_ASSETS)/shared/models/test2.txc \
 					  $(PATH_ASSETS)/shared/models/test3.col \
-					  $(PATH_ASSETS)/shared/models/test3.vis \
 					  $(PATH_ASSETS)/shared/models/test3.msh \
-					  $(PATH_ASSETS)/shared/models/test3.txc \
 					  $(PATH_ASSETS)/shared/models/weapons.msh \
+					  $(PATH_ASSETS)/level_editor/editor/gizmos.msh \
+					  .WAIT \
+					  $(PATH_ASSETS)/shared/models/entity.txc \
+					  $(PATH_ASSETS)/shared/models/level.txc \
+					  $(PATH_ASSETS)/shared/models/level2.txc \
+					  $(PATH_ASSETS)/shared/models/test.txc \
+					  $(PATH_ASSETS)/shared/models/test2.txc \
+					  $(PATH_ASSETS)/shared/models/test3.txc \
 					  $(PATH_ASSETS)/shared/models/weapons.txc \
 					  $(PATH_ASSETS)/shared/models/ui_tex/menu1.txc \
 					  $(PATH_ASSETS)/shared/models/ui_tex/menu2.txc \
 					  $(PATH_ASSETS)/nds/models/ui_tex/menu_ds.txc \
 					  $(PATH_ASSETS)/shared/models/ui_tex/ui.txc \
+					  $(PATH_ASSETS)/level_editor/editor/gizmos.txc \
+					  .WAIT \
+					  $(PATH_ASSETS)/shared/models/level.vis \
+					  $(PATH_ASSETS)/shared/models/level2.vis \
+					  $(PATH_ASSETS)/shared/models/test.vis \
+					  $(PATH_ASSETS)/shared/models/test2.vis \
+					  $(PATH_ASSETS)/shared/models/test3.vis \
+					  .WAIT \
 					  $(PATH_ASSETS)/pc/audio/instr.sbk \
 					  $(PATH_ASSETS)/pc/audio/sfx.sbk \
 					  $(PATH_ASSETS)/psx/audio/instr.sbk \
@@ -495,8 +501,6 @@ COMPILED_ASSET_LIST = $(PATH_ASSETS)/pc/GOURAUD.FSH \
 					  $(PATH_ASSETS)/shared/audio/music/level3.dss \
 					  $(PATH_ASSETS)/shared/audio/music/pitchtst.dss \
 					  $(PATH_ASSETS)/shared/audio/music/subnivis.dss \
-					  $(PATH_ASSETS)/level_editor/editor/gizmos.msh \
-					  $(PATH_ASSETS)/level_editor/editor/gizmos.txc
 
 # Shaders for Windows and Level Editor build
 $(PATH_ASSETS)/pc/%.FSH: $(PATH_ASSETS_TO_BUILD)/%.FSH
@@ -516,7 +520,7 @@ $(PATH_ASSETS)/shared/levels/%.lvl: $(PATH_ASSETS_TO_BUILD)/levels/%.lvl
 	@cp $< $@
 
 # If we encounter a vislist, we need to compile the model slightly differently. So do that before creating the vislist
-$(PATH_ASSETS)/shared/models/%.vis: $(PATH_ASSETS_TO_BUILD)/models/%.obj
+$(PATH_ASSETS)/shared/models/%.vis: $(PATH_ASSETS_TO_BUILD)/models/%.obj obj2psx psx_vislist_generator
 	@mkdir -p $(dir $@)
 	@echo Compiling $<
 	@$(PATH_TOOLS_BIN)/obj2psx$(EXE_EXT) --input $< --output $(basename $@) --split
@@ -524,52 +528,52 @@ $(PATH_ASSETS)/shared/models/%.vis: $(PATH_ASSETS_TO_BUILD)/models/%.obj
 	@$(PATH_TOOLS_BIN)/psx_vislist_generator$(EXE_EXT) $(basename $@).msh $(basename $@).col $@
 
 # Collision model
-$(PATH_ASSETS)/shared/models/%.col: $(PATH_ASSETS_TO_BUILD)/models/%_col.obj
+$(PATH_ASSETS)/shared/models/%.col: $(PATH_ASSETS_TO_BUILD)/models/%_col.obj obj2psx
 	@mkdir -p $(dir $@)
 	@echo Compiling $<
 	@$(PATH_TOOLS_BIN)/obj2psx$(EXE_EXT) --input $< --output $(basename $@) --collision
 
 # Any other model, like weapon models or entity models
-$(PATH_ASSETS)/shared/models/%.msh: $(PATH_ASSETS_TO_BUILD)/models/%.obj
+$(PATH_ASSETS)/shared/models/%.msh: $(PATH_ASSETS_TO_BUILD)/models/%.obj obj2psx
 	@mkdir -p $(dir $@)
 	@echo Compiling $<
 	@$(PATH_TOOLS_BIN)/obj2psx$(EXE_EXT) --input $< --output $(basename $@)
 $(PATH_ASSETS)/shared/models/%.txc: $(PATH_ASSETS)/models/%.msh
 
 # UI textures
-$(PATH_ASSETS)/shared/models/ui_tex/%.txc: $(PATH_ASSETS_TO_BUILD)/models/ui_tex/%.png
+$(PATH_ASSETS)/shared/models/ui_tex/%.txc: $(PATH_ASSETS_TO_BUILD)/models/ui_tex/%.png obj2psx
 	@mkdir -p $(dir $@)
 	@echo Compiling $<
 	@$(PATH_TOOLS_BIN)/obj2psx$(EXE_EXT) --input $< --output $@
-$(PATH_ASSETS)/nds/models/ui_tex/%.txc: $(PATH_ASSETS_TO_BUILD)/models/ui_tex/%.png
+$(PATH_ASSETS)/nds/models/ui_tex/%.txc: $(PATH_ASSETS_TO_BUILD)/models/ui_tex/%.png obj2psx
 	@mkdir -p $(dir $@)
 	@echo Compiling $<
 	@$(PATH_TOOLS_BIN)/obj2psx$(EXE_EXT) --input $< --output $@
 
 # Soundbank
-$(PATH_ASSETS)/pc/audio/%.sbk: $(PATH_ASSETS_TO_BUILD)/audio/%.csv
+$(PATH_ASSETS)/pc/audio/%.sbk: $(PATH_ASSETS_TO_BUILD)/audio/%.csv psx_soundfont_generator
 	@mkdir -p $(dir $@)
 	@echo Compiling $<
 	@$(PATH_TOOLS_BIN)/psx_soundfont_generator$(EXE_EXT) $< $@ pcm16
 
-$(PATH_ASSETS)/psx/audio/%.sbk: $(PATH_ASSETS_TO_BUILD)/audio/%.csv
+$(PATH_ASSETS)/psx/audio/%.sbk: $(PATH_ASSETS_TO_BUILD)/audio/%.csv psx_soundfont_generator
 	@mkdir -p $(dir $@)
 	@echo Compiling $<
 	@$(PATH_TOOLS_BIN)/psx_soundfont_generator$(EXE_EXT) $< $@ psx
 
 # Music sequences
-$(PATH_ASSETS)/shared/audio/music/%.dss: $(PATH_ASSETS_TO_BUILD)/audio/music/%.mid
+$(PATH_ASSETS)/shared/audio/music/%.dss: $(PATH_ASSETS_TO_BUILD)/audio/music/%.mid midi2psx
 	@mkdir -p $(dir $@)
 	@echo Compiling $<
 	@$(PATH_TOOLS_BIN)/midi2psx$(EXE_EXT) $< $@
 
 # Level editor assets
-$(PATH_ASSETS)/level_editor/%.msh: $(PATH_ASSETS_TO_BUILD)/level_editor/%.obj
+$(PATH_ASSETS)/level_editor/%.msh: $(PATH_ASSETS_TO_BUILD)/level_editor/%.obj obj2psx
 	@mkdir -p $(dir $@)
 	@echo Compiling $<
 	@$(PATH_TOOLS_BIN)/obj2psx$(EXE_EXT) --input $< --output $(basename $@)
 
-$(PATH_TEMP)/pc/assets.sfa: $(COMPILED_ASSET_LIST)
+$(PATH_TEMP)/pc/assets.sfa: $(COMPILED_ASSET_LIST) fsfa_builder
 	@mkdir -p $(dir $@)
 	@mkdir -p $(PATH_ASSETS)/shared
 	@mkdir -p $(PATH_ASSETS)/pc
@@ -579,7 +583,7 @@ $(PATH_TEMP)/pc/assets.sfa: $(COMPILED_ASSET_LIST)
 	@cp -r $(PATH_ASSETS)/pc/* $(PATH_TEMP)/pc/assets/
 	@$(PATH_TOOLS_BIN)/fsfa_builder$(EXE_EXT) $(PATH_TEMP)/pc/assets/ $@ --align 2048
 
-$(PATH_TEMP)/psx/assets.sfa: $(COMPILED_ASSET_LIST)
+$(PATH_TEMP)/psx/assets.sfa: $(COMPILED_ASSET_LIST) fsfa_builder
 	@mkdir -p $(dir $@)
 	@mkdir -p $(PATH_ASSETS)/shared
 	@mkdir -p $(PATH_ASSETS)/psx
@@ -599,8 +603,8 @@ rebuild_assets: clean_assets assets
 clean:
 	rm -rf $(PATH_TEMP)
 	rm -rf $(PATH_BUILD)
-	rm -rf $(PATH_ASSETS)
+# 	rm -rf $(PATH_ASSETS)
 	rm -rf $(PATH_TOOLS_BIN)
-	cargo clean --manifest-path=tools/obj2psx/Cargo.toml
-	cargo clean --manifest-path=tools/midi2psx/Cargo.toml
-	cargo clean --manifest-path=tools/psx_vislist_generator/Cargo.toml
+# 	cargo clean --manifest-path=tools/obj2psx/Cargo.toml
+# 	cargo clean --manifest-path=tools/midi2psx/Cargo.toml
+# 	cargo clean --manifest-path=tools/psx_vislist_generator/Cargo.toml
