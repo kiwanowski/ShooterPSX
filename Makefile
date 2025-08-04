@@ -135,8 +135,8 @@ OBJ_NDS					= 	$(patsubst %.c, 	$(PATH_OBJ_NDS)/%.o,	        $(CODE_NDS_C))				\
 OBJ_LEVEL_EDITOR		= 	$(patsubst %.c, 	$(PATH_OBJ_LEVEL_EDITOR)/%.o, 	$(CODE_LEVEL_EDITOR_C))		\
 							$(patsubst %.cpp, 	$(PATH_OBJ_LEVEL_EDITOR)/%.o, 	$(CODE_LEVEL_EDITOR_CPP))		
 
-CFLAGS = -Wall -Wextra -std=c11 -Wno-old-style-declaration -Wno-format 
-CXXFLAGS = -Wall -Wextra -std=c++20 -Wno-format
+CFLAGS = -Wall -Wextra -Werror -std=c11 -Wno-old-style-declaration -Wno-format 
+CXXFLAGS = -Wall -Wextra -Werror -std=c++20 -Wno-format
 LINKER_FLAGS = 
 
 .PHONY: all submodules tools assets pc level_editor psx nds clean mkdir_output_pc pc_dependencies glfw gl3w imgui imguizmo
