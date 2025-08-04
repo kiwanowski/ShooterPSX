@@ -508,7 +508,7 @@ void renderer_end_frame(void) {
 }
 
 int32_t max_dot_value = 0;
-void renderer_draw_mesh_shaded(const mesh_t* mesh, const transform_t *model_transform, int local, int facing_camera, int tex_id_offset) {
+void renderer_draw_mesh_shaded(mesh_t* mesh, const transform_t *model_transform, int local, int facing_camera, int tex_id_offset) {
 	++n_meshes_drawn;
 	printf("%s:%i - %08p\n",__FILE__, __LINE__, mesh);
 
@@ -667,6 +667,8 @@ void renderer_update_lights(const light_t* const lights, const size_t n_lights) 
 	}
 
 	while (i < MAX_LIGHT_COUNT) {
+		converted_lights[i].type = 0.0f;
+		++i;
 	}
 	
 	glBindBuffer(GL_UNIFORM_BUFFER, light_buffer_gpu);

@@ -7,10 +7,10 @@
 
 #if defined(_PSX)
 #define size_stack_temp (333  * KiB)
-#elif defined(_PC) 
-#define size_stack_temp (8 * MiB)
 #elif defined(_NDS) 
 #define size_stack_temp (333 * KiB)
+#else
+#define size_stack_temp (8 * MiB)
 #endif
 #define size_stack_level (1024 * KiB)
 #define size_stack_music (100 * KiB)
@@ -45,11 +45,11 @@ char* stack_names[] = {
     "STACK_ENTITY",
     "STACK_VRAM_SWAP",
 };
-#endif
 
 static void* allocated_memory_pointers[512] = {0};
 static size_t allocated_memory_size[512] = {0};
 static memory_category_t allocated_memory_category[512] = {0};
+#endif
 
 void* scheduled_frees[32];
 int n_scheduled_frees = 0;
