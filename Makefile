@@ -603,8 +603,8 @@ rebuild_assets: clean_assets assets
 clean:
 	rm -rf $(PATH_TEMP)
 	rm -rf $(PATH_BUILD)
-# 	rm -rf $(PATH_ASSETS)
+	rm -rf $(PATH_ASSETS)
 	rm -rf $(PATH_TOOLS_BIN)
-# 	cargo clean --manifest-path=tools/obj2psx/Cargo.toml
-# 	cargo clean --manifest-path=tools/midi2psx/Cargo.toml
-# 	cargo clean --manifest-path=tools/psx_vislist_generator/Cargo.toml
+	cargo clean --manifest-path=tools/obj2psx/Cargo.toml
+	cargo clean --manifest-path=tools/midi2psx/Cargo.toml
+	cargo clean --manifest-path=tools/psx_vislist_generator/Cargo.toml
